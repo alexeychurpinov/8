@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Оставить заявку</title>
+    <style>
+      body { max-width: 38rem; margin: 3rem auto; padding: 0 1rem; font: 1rem/1.5 system-ui, sans-serif; }
+      label { display: block; margin: 1rem 0; }
+      input, textarea, button { box-sizing: border-box; width: 100%; padding: .65rem; font: inherit; }
+      button { cursor: pointer; }
+      #result { min-height: 1.5em; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Оставить заявку</h1>
+      <form id="lead-form">
+        <label>Имя
+          <input name="name" maxlength="120" autocomplete="name" required>
+        </label>
+        <label>Телефон
+          <input name="phone" type="tel" maxlength="32" autocomplete="tel" required>
+        </label>
+        <label>Email
+          <input name="email" type="email" maxlength="254" autocomplete="email" required>
+        </label>
+        <label>Услуга
+          <input name="service" maxlength="160" required>
+        </label>
+        <label>Комментарий
+          <textarea name="comment" maxlength="1500" rows="4"></textarea>
+        </label>
+        <input type="hidden" name="source" value="website-form">
+        <button type="submit">Отправить заявку</button>
+      </form>
+      <p id="result" role="status" aria-live="polite"></p>
+    </main>
+    <script>
+      const form = document.querySelector("#lead-form");
+      const result = document.querySelector("#result");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = form.querySelector("button[type=submit]");
+        button.disabled = true;
+        result.textContent = "Отправляем…";
+        const values = Object.fromEntries(new FormData(form));
+
+        try {
+          const response = await fetch("/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(values),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Не удалось отправить заявку.");
+          form.reset();
+          result.textContent = `Заявка №${data.id} отправлена.`;
+        } catch (error) {
+          result.textContent = error instanceof Error
+            ? error.message
+            : "Не удалось отправить заявку. Попробуйте позже.";
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
